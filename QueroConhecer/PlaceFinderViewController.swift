@@ -9,6 +9,10 @@
 import UIKit
 import MapKit
 
+protocol PlaceFinderDelegate: class {
+    func addPlace(_ place: Place)
+}
+
 class PlaceFinderViewController: UIViewController {
 
     enum PlaceFinderMessageType {
@@ -25,10 +29,28 @@ class PlaceFinderViewController: UIViewController {
     
     var place: Place!
     
+    weak var delegate: PlaceFinderDelegate?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Do any additional setup after loading the view.
+        let gesture = UILongPressGestureRecognizer(target: self, action: #selector(getLocation(_:)))
+        gesture.minimumPressDuration = 2.0
+        mapView.addGestureRecognizer(gesture)
+    }
+    
+    @objc func getLocation(_ gesture: UILongPressGestureRecognizer) {
+        if gesture.state == .began {
+            load(show: true)
+            let point = gesture.location(in: mapView)
+            let coordinate = mapView.convert(point, toCoordinateFrom: mapView)
+            
+            let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+            
+            CLGeocoder().reverseGeocodeLocation(location) { (placemarks, error) in
+                self.validatePlace(placemarks, error)
+            }
+        }
     }
 
     @IBAction func findCity(_ sender: UIButton) {
@@ -41,16 +63,20 @@ class PlaceFinderViewController: UIViewController {
         let geoCoder = CLGeocoder()
         
         geoCoder.geocodeAddressString(address) { (placemarks, error) in
-            self.load(show: false)
-            if error == nil {
-                if !self.savePlace(with: placemarks?.first) {
-                    self.showMessage(type: .error("Não foi encontrado nenhum local com esse nome"))
-                }
-            } else {
-                self.showMessage(type: .error("Erro desconhecido"))
-            }
+            self.validatePlace(placemarks, error)
         }
         
+    }
+    
+    func validatePlace(_ placemarks: [CLPlacemark]?, _ error: Error?) {
+        self.load(show: false)
+        if error == nil {
+            if !self.savePlace(with: placemarks?.first) {
+                self.showMessage(type: .error("Não foi encontrado nenhum local com esse nome"))
+            }
+        } else {
+            self.showMessage(type: .error("Erro desconhecido"))
+        }
     }
     
     func savePlace(with placemark: CLPlacemark?) -> Bool {
@@ -88,7 +114,8 @@ class PlaceFinderViewController: UIViewController {
         alert.addAction(cancelAction)
         if hasConfirmation {
             let confirmAction = UIAlertAction(title: "OK", style: .default) { (action) in
-                
+                self.delegate?.addPlace(self.place)
+                self.dismiss(animated: true, completion: nil)
             }
             alert.addAction(confirmAction)
         }

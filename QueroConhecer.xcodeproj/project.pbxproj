@@ -16,7 +16,8 @@
 		DD04CB942509B32B0096E4DD /* PlacesTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD04CB932509B32B0096E4DD /* PlacesTableViewController.swift */; };
 		DD04CB962509B4E70096E4DD /* PlaceFinderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD04CB952509B4E70096E4DD /* PlaceFinderViewController.swift */; };
 		DD04CB982509BEC70096E4DD /* MapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD04CB972509BEC70096E4DD /* MapViewController.swift */; };
-		DD04CB9A250B02070096E4DD /* place.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD04CB99250B02070096E4DD /* place.swift */; };
+		DD04CB9A250B02070096E4DD /* Place.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD04CB99250B02070096E4DD /* Place.swift */; };
+		DD41F1F42510414B00197028 /* PlaceAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD41F1F32510414B00197028 /* PlaceAnnotation.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,7 +32,8 @@
 		DD04CB932509B32B0096E4DD /* PlacesTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacesTableViewController.swift; sourceTree = "<group>"; };
 		DD04CB952509B4E70096E4DD /* PlaceFinderViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceFinderViewController.swift; sourceTree = "<group>"; };
 		DD04CB972509BEC70096E4DD /* MapViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewController.swift; sourceTree = "<group>"; };
-		DD04CB99250B02070096E4DD /* place.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = place.swift; sourceTree = "<group>"; };
+		DD04CB99250B02070096E4DD /* Place.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Place.swift; sourceTree = "<group>"; };
+		DD41F1F32510414B00197028 /* PlaceAnnotation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceAnnotation.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,10 +70,11 @@
 				DD04CB812509B0B00096E4DD /* SceneDelegate.swift */,
 				DD04CB832509B0B00096E4DD /* ViewController.swift */,
 				DD04CB852509B0B00096E4DD /* Main.storyboard */,
+				DD04CB99250B02070096E4DD /* Place.swift */,
 				DD04CB972509BEC70096E4DD /* MapViewController.swift */,
-				DD04CB952509B4E70096E4DD /* PlaceFinderViewController.swift */,
-				DD04CB99250B02070096E4DD /* place.swift */,
 				DD04CB932509B32B0096E4DD /* PlacesTableViewController.swift */,
+				DD41F1F32510414B00197028 /* PlaceAnnotation.swift */,
+				DD04CB952509B4E70096E4DD /* PlaceFinderViewController.swift */,
 				DD04CB882509B0B10096E4DD /* Assets.xcassets */,
 				DD04CB8A2509B0B10096E4DD /* LaunchScreen.storyboard */,
 				DD04CB8D2509B0B10096E4DD /* Info.plist */,
@@ -150,8 +153,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DD41F1F42510414B00197028 /* PlaceAnnotation.swift in Sources */,
 				DD04CB842509B0B00096E4DD /* ViewController.swift in Sources */,
-				DD04CB9A250B02070096E4DD /* place.swift in Sources */,
+				DD04CB9A250B02070096E4DD /* Place.swift in Sources */,
 				DD04CB982509BEC70096E4DD /* MapViewController.swift in Sources */,
 				DD04CB942509B32B0096E4DD /* PlacesTableViewController.swift in Sources */,
 				DD04CB802509B0B00096E4DD /* AppDelegate.swift in Sources */,
