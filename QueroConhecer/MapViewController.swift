@@ -11,6 +11,11 @@ import MapKit
 
 class MapViewController: UIViewController {
 
+    enum MapMessagetype {
+        case routeError
+        case authorizationWarning
+    }
+    
     @IBOutlet weak var searchBar: UISearchBar!
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var viInfo: UIView!
@@ -19,8 +24,11 @@ class MapViewController: UIViewController {
     @IBOutlet weak var lbAddress: UILabel!
     @IBOutlet weak var loading: UIActivityIndicatorView!
     
+    var btUserLocation: MKUserTrackingButton!
     var places: [Place]!
     var poi: [MKAnnotation] = []
+    lazy var locationManager = CLLocationManager()
+    var selectedAnnotation: PlaceAnnotation?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -36,6 +44,7 @@ class MapViewController: UIViewController {
         searchBar.isHidden = true
         viInfo.isHidden = true
         mapView.delegate = self
+        locationManager.delegate = self
         
         if places.count == 1 {
             title = places[0].name
@@ -47,7 +56,37 @@ class MapViewController: UIViewController {
             addToMap(place)
         }
         
+        configureLocationButton()
+        
         showPlaces()
+        requestUserLocationAuthorization()
+    }
+    
+    func configureLocationButton() {
+        btUserLocation = MKUserTrackingButton(mapView: mapView)
+        btUserLocation.backgroundColor = .white
+        btUserLocation.frame.origin.x = 10
+        btUserLocation.frame.origin.y = 10
+        btUserLocation.layer.cornerRadius = 5
+        btUserLocation.layer.borderWidth = 1
+        btUserLocation.layer.borderColor = UIColor(named: "main")?.cgColor
+    }
+    
+    func requestUserLocationAuthorization() {
+        if CLLocationManager.locationServicesEnabled() {
+            switch CLLocationManager.authorizationStatus() {
+                case .authorizedAlways, .authorizedWhenInUse:
+                    mapView.addSubview(btUserLocation)
+                case .denied:
+                    showMessage(type: .authorizationWarning)
+                case .notDetermined:
+                    locationManager.requestWhenInUseAuthorization()
+                default:
+                    break
+            }
+        } else {
+            
+        }
     }
     
     func addToMap(_ place: Place) {
@@ -61,12 +100,71 @@ class MapViewController: UIViewController {
         mapView.showAnnotations(mapView.annotations, animated: true)
     }
     
+    func showInfo() {
+        lbName.text = selectedAnnotation!.title
+        lbAddress.text = selectedAnnotation!.address
+        viInfo.isHidden = false
+    }
+    
     @IBAction func showRoute(_ sender: UIButton) {
+        if CLLocationManager.authorizationStatus() != .authorizedWhenInUse {
+            showMessage(type: .authorizationWarning)
+            return
+        }
+        
+        let request = MKDirections.Request()
+        request.destination = MKMapItem(placemark: MKPlacemark(coordinate: selectedAnnotation!.coordinate))
+        request.source = MKMapItem(placemark: MKPlacemark(coordinate: locationManager.location!.coordinate))
+        let directions = MKDirections(request: request)
+        directions.calculate { (response, error) in
+            if error == nil {
+                if let response = response {
+                    self.mapView.removeOverlays(self.mapView.overlays)
+                    
+                    let route = response.routes.first!
+                    print("Nome: ", route.name)
+                    print("Distância: ", route.distance)
+                    print("Duração: ", route.expectedTravelTime)
+                    print("--------------------")
+                    for step in route.steps {
+                        print("Em \(step.distance) metro(s), \(step.instructions)")
+                    }
+                    
+                    self.mapView.addOverlay(route.polyline, level: .aboveRoads)
+                    var annotations = self.mapView.annotations.filter({!($0 is PlaceAnnotation)})
+                    annotations.append(self.selectedAnnotation!)
+                    self.mapView.showAnnotations(annotations, animated: true)
+                    
+                }
+            } else {
+                self.showMessage(type: .routeError)
+            }
+        }
     }
     
     @IBAction func showSearchBar(_ sender: UIBarButtonItem) {
         searchBar.resignFirstResponder()
         searchBar.isHidden = !searchBar.isHidden
+    }
+    
+    func showMessage(type: MapMessagetype) {
+        let title = type == . authorizationWarning ? "Aviso" : "Erro"
+        let message = type == .authorizationWarning ? "Para usar os recursos de localização do App, você precisa permitir o gps na tela de Ajustes" : "Não foi possível encontrar esta rota"
+
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let cancelAction = UIAlertAction(title: "Cancelar", style: .cancel, handler: nil)
+        alert.addAction(cancelAction)
+        if type == .authorizationWarning {
+            let confirmAction = UIAlertAction(title: "Ir para Ajustes", style: .default) { (action) in
+                
+                if let appSettings = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(appSettings, options: [:], completionHandler: nil)
+                }
+            }
+            alert.addAction(confirmAction)
+        }
+
+        present(alert, animated: true, completion: nil)
     }
     
 
@@ -91,6 +189,27 @@ extension MapViewController: MKMapViewDelegate {
         annotationView?.displayPriority = type == .place ? .required : .defaultHigh
 
         return annotationView
+    }
+    
+    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        let camera = MKMapCamera()
+        camera.centerCoordinate = view.annotation!.coordinate
+        camera.pitch = 80
+        camera.altitude = 100
+        mapView.setCamera(camera, animated: true)
+        
+        selectedAnnotation = (view.annotation as! PlaceAnnotation)
+        showInfo()
+    }
+    
+    func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+        if overlay is MKPolyline {
+            let renderer = MKPolylineRenderer(overlay: overlay)
+            renderer.strokeColor = UIColor(named: "main")?.withAlphaComponent(0.8)
+            renderer.lineWidth = 5.0
+            return renderer
+        }
+        return MKOverlayRenderer(overlay: overlay)
     }
 }
 
@@ -124,5 +243,26 @@ extension MapViewController: UISearchBarDelegate {
             }
             self.loading.stopAnimating()
         }
+    }
+}
+
+extension MapViewController: CLLocationManagerDelegate {
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        switch status {
+        case .authorizedAlways, .authorizedWhenInUse:
+            mapView.showsUserLocation = true
+            mapView.addSubview(btUserLocation)
+            locationManager.startUpdatingLocation()
+        default:
+            break
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+//        if let location = locations.last {
+//            print("Velocidade: ", location.speed)
+//            let region = MKCoordinateRegion.init(center: location.coordinate, latitudinalMeters: 500, longitudinalMeters: 500)
+//            mapView.setRegion(region, animated: true)
+//        }
     }
 }
